@@ -1,0 +1,36 @@
+id: com.parchlinux.pordle
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: pordle
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  env:
+    CARGO_HOME: /run/build/pordle/cargo
+  build-args:
+    - --share=network
+
+modules:
+  - name: pordle
+    buildsystem: simple
+    build-commands:
+      - cargo --offline build --release
+      - install -Dm755 target/release/pordle /app/bin/pordle
+      - install -Dm644 data/com.parchlinux.pordle.desktop /app/share/applications/com.parchlinux.pordle.desktop
+      - install -Dm644 data/icons/com.parchlinux.pordle.svg
+        /app/share/icons/hicolor/scalable/apps/com.parchlinux.pordle.svg
+
+    sources:
+      - type: archive
+        url: https://github.com/parchlinux/pordle/archive/v0.1.0.tar.gz
+        sha256: SKIP
+      - generated/cargo-sources.json

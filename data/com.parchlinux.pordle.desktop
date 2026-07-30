@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=پردل
+Name[fa]=پردل
+GenericName=Persian Wordle Game
+GenericName[fa]=بازی وردل فارسی
+Comment=A Persian Wordle game for Parch Linux
+Comment[fa]=یک بازی وردل فارسی برای پارچ لینوکس
+Exec=pordle
+Icon=com.parchlinux.pordle
+Terminal=false
+Categories=Game;LogicGame;
+StartupNotify=true

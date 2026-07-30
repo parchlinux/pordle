@@ -1,0 +1,17 @@
+<svg width="512" height="512" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pordlePlate" x1="64" y1="8" x2="64" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00FF95"/>
+      <stop offset="0.5" stop-color="#00A9FF"/>
+      <stop offset="1" stop-color="#0080FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#pordlePlate)"/>
+  <rect x="30" y="24" width="14" height="14" rx="3" fill="white" fill-opacity="0.9"/>
+  <rect x="48" y="24" width="14" height="14" rx="3" fill="white" fill-opacity="0.55"/>
+  <rect x="66" y="24" width="14" height="14" rx="3" fill="white" fill-opacity="0.9"/>
+  <rect x="84" y="24" width="14" height="14" rx="3" fill="white" fill-opacity="0.55"/>
+  <text x="64" y="94" font-family="Vazirmatn, 'Noto Sans Arabic', Tahoma, sans-serif"
+        font-size="66" font-weight="700" fill="white"
+        text-anchor="middle">پ</text>
+</svg>
