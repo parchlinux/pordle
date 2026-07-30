@@ -8,7 +8,7 @@ authors = ["Parch Linux Team"]
 [dependencies]
 gtk = { package = "gtk4", version = "0.11" }
 adw = { package = "libadwaita", version = "0.9", features = ["v1_5"] }
-rusqlite = { version = "0.31", features = ["bundled"] }
+rusqlite = "0.31"
 clap = { version = "4", features = ["derive"] }
 gdk = { package = "gdk4", version = "0.11" }
 glib = "0.22"
