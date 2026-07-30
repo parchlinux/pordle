@@ -1,6 +1,6 @@
 # Maintainer: Parch Linux Team
 pkgname=pordle
-pkgver=0.1.0
+pkgver=0.1
 pkgrel=1
 pkgdesc="A Persian Wordle game for Parch Linux"
 arch=('x86_64')
@@ -8,7 +8,7 @@ url="https://github.com/parchlinux/pordle"
 license=('AGPL3')
 depends=('gtk4' 'libadwaita' 'hicolor-icon-theme')
 makedepends=('cargo')
-source=("$pkgname-$pkgver.tar.gz::https://github.com/parchlinux/pordle/archive/v$pkgver.tar.gz")
+source=("$pkgname-$pkgver.tar.gz::https://github.com/parchlinux/pordle/archive/$pkgver.tar.gz")
 sha256sums=('SKIP')
 
 prepare() {

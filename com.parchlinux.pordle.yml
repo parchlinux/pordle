@@ -31,6 +31,6 @@ modules:
 
     sources:
       - type: archive
-        url: https://github.com/parchlinux/pordle/archive/v0.1.0.tar.gz
+        url: https://github.com/parchlinux/pordle/archive/v0.1.tar.gz
         sha256: SKIP
       - generated/cargo-sources.json

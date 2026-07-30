@@ -48,7 +48,8 @@ jobs:
 
       - name: Generate cargo sources
         run: |
-          pip install flatpak-cargo-generator
+          dnf install -y python3-pip
+          pip3 install flatpak-cargo-generator
           flatpak-cargo-generator Cargo.lock -o flatpak/cargo-sources.json
 
       - name: Build Flatpak
