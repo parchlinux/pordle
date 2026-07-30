@@ -272,33 +272,25 @@ impl GameWindow {
         let new_keyboard = self.keyboard.clone();
         let new_db = self.db.clone();
         let new_mode = self.mode.clone();
-        let new_today = today_key();
 
         new_game_button.connect_clicked(move |_| {
             let m = *new_mode.borrow();
             let db_ref = new_db.borrow();
-            let (g, _restored) = if m == GameMode::Daily {
-                if let Some(result) = db_ref.load_daily_result(&new_today) {
-                    (Game::restore_with_guesses(result.answer, &result.guesses), true)
-                } else {
-                    (Game::new(pick_word(&db_ref, &GameMode::Daily)), false)
-                }
+            let g = if m == GameMode::Daily {
+                Game::new(pick_word(&db_ref, &GameMode::Daily))
             } else {
-                (Game::new(pick_word(&db_ref, &GameMode::Practice)), false)
+                Game::new(pick_word(&db_ref, &GameMode::Practice))
             };
             drop(db_ref);
             *new_game.borrow_mut() = g;
             new_board.reset();
             new_keyboard.reset_states();
-            let g = new_game.borrow();
-            new_board.restore_from_game(&g);
-            let states = g.keyboard_states();
-            new_keyboard.update_states(&states);
         });
 
         about_btn.connect_clicked(|btn| {
             let about = adw::AboutDialog::builder()
                 .application_name("پردل")
+                .application_icon("com.parchlinux.pordle")
                 .version("0.1.0")
                 .comments("یک بازی وردل فارسی برای پارچ لینوکس")
                 .website("https://parchlinux.com")
