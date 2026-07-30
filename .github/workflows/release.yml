@@ -1,9 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - v*
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -106,24 +105,17 @@ jobs:
 
       - name: Generate release notes
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${{ github.event.release.tag_name }}"
           cat > release-notes.md << EOF
-          ## Pordle v${VERSION}
+          ## Pordle ${TAG}
 
           A Persian Wordle game for Parch Linux.
 
-          ### Assets
-          - **pordle** – Linux binary (x86_64)
-          - **pordle.flatpak** – Flatpak bundle
-          - **pordle-\${VERSION}-x86_64.pkg.tar.zst** – Arch Linux package
-
-          ### Installation
-          **Binary**: extract and run \`./pordle\` (requires GTK4, libadwaita).
-          **Flatpak**: \`flatpak install pordle.flatpak\`
-          **Arch**: \`sudo pacman -U pordle-*.pkg.tar.zst\`
+          Assets attached below include the Linux binary with desktop
+          file and icon, a Flatpak bundle, and an Arch Linux package.
           EOF
 
-      - name: Upload to release
+      - name: Upload assets to release
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -131,5 +123,4 @@ jobs:
             flatpak-bundle/*
             arch-package/*
           body_path: release-notes.md
-          generate_release_notes: false
-          make_latest: true
+          tag_name: ${{ github.event.release.tag_name }}
