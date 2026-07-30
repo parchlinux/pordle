@@ -50,7 +50,8 @@ jobs:
         run: |
           dnf install -y python3-pip
           pip3 install flatpak-cargo-generator
-          flatpak-cargo-generator Cargo.lock -o flatpak/cargo-sources.json
+          mkdir -p generated
+          flatpak-cargo-generator Cargo.lock -o generated/cargo-sources.json
 
       - name: Build Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6

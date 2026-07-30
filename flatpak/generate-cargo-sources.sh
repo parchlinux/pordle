@@ -9,9 +9,10 @@ if ! command -v flatpak-cargo-generator &>/dev/null; then
 fi
 
 echo "Generating cargo-sources.json from Cargo.lock..."
-flatpak-cargo-generator Cargo.lock -o flatpak/cargo-sources.json
+mkdir -p generated
+flatpak-cargo-generator Cargo.lock -o generated/cargo-sources.json
 
-echo "Done. cargo-sources.json is in flatpak/"
+echo "Done. cargo-sources.json is in generated/"
 echo ""
 echo "To build:"
 echo "  flatpak-builder build-dir com.parchlinux.pordle.yml --force-clean"
