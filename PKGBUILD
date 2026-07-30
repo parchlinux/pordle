@@ -36,6 +36,8 @@ package() {
 
     install -Dm644 data/words.txt "$pkgdir/usr/share/pordle/words.txt"
 
-    install -Dm644 data/com.parchlinux.pordle.metainfo.xml \
-        "$pkgdir/usr/share/metainfo/com.parchlinux.pordle.metainfo.xml"
+    if [ -f data/com.parchlinux.pordle.metainfo.xml ]; then
+        install -Dm644 data/com.parchlinux.pordle.metainfo.xml \
+            "$pkgdir/usr/share/metainfo/com.parchlinux.pordle.metainfo.xml"
+    fi
 }

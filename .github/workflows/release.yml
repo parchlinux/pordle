@@ -10,10 +10,14 @@ permissions:
 jobs:
   build-flatpak:
     name: Build Flatpak (${{ matrix.arch }})
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [x86_64, aarch64]
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
