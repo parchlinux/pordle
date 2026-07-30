@@ -19,7 +19,7 @@ prepare() {
 build() {
     cd "$srcdir/$pkgname-$pkgver"
     export CARGO_TARGET_DIR="$srcdir/pordle-target"
-    cargo build --release
+    cargo build --release --frozen
 }
 
 package() {
