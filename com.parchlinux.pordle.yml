@@ -31,7 +31,6 @@ modules:
       - install -Dm644 data/words.txt /app/share/pordle/words.txt
 
     sources:
-      - type: archive
-        url: https://github.com/parchlinux/pordle/archive/0.1.1.tar.gz
-        sha256: SKIP
+      - type: dir
+        path: .
       - generated/cargo-sources.json
