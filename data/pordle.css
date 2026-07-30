@@ -40,14 +40,14 @@
 }
 
 .keyboard-key {
-  min-width: 38px;
-  min-height: 52px;
+  min-width: 34px;
+  min-height: 46px;
   border-radius: 6px;
   font-size: 15px;
   font-weight: bold;
   font-family: 'Vazirmatn', 'Noto Naskh Arabic', sans-serif;
   margin: 1px;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 .key-unused {
@@ -75,18 +75,18 @@
 }
 
 .special-key {
-  min-width: 48px;
+  min-width: 38px;
   font-size: 12px;
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 .board-grid {
-  margin: 16px;
+  margin: 8px;
 }
 
 .keyboard-grid {
-  margin: 4px;
-  margin-bottom: 16px;
+  margin: 2px;
+  margin-bottom: 8px;
 }
 
 .mode-switch {

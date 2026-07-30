@@ -171,7 +171,7 @@ impl GameWindow {
         let window = ApplicationWindow::builder()
             .application(app)
             .title("پردل")
-            .default_width(400)
+            .default_width(380)
             .default_height(720)
             .content(&content)
             .build();
