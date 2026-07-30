@@ -35,4 +35,7 @@ package() {
         "$pkgdir/usr/share/icons/hicolor/scalable/apps/com.parchlinux.pordle.svg"
 
     install -Dm644 data/words.txt "$pkgdir/usr/share/pordle/words.txt"
+
+    install -Dm644 data/com.parchlinux.pordle.metainfo.xml \
+        "$pkgdir/usr/share/metainfo/com.parchlinux.pordle.metainfo.xml"
 }

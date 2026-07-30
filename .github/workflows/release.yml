@@ -9,8 +9,11 @@ permissions:
 
 jobs:
   build-flatpak:
-    name: Build Flatpak
+    name: Build Flatpak (${{ matrix.arch }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
     container:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
@@ -31,15 +34,16 @@ jobs:
       - name: Build Flatpak
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
-          bundle: pordle.flatpak
+          bundle: pordle-${{ matrix.arch }}.flatpak
           manifest-path: com.parchlinux.pordle.yml
-          cache-key: flatpak-${{ github.sha }}
+          arch: ${{ matrix.arch }}
+          cache-key: flatpak-${{ matrix.arch }}-${{ github.sha }}
 
       - name: Upload Flatpak artifact
         uses: actions/upload-artifact@v4
         with:
-          name: flatpak-bundle
-          path: pordle.flatpak
+          name: flatpak-bundle-${{ matrix.arch }}
+          path: pordle-${{ matrix.arch }}.flatpak
           if-no-files-found: error
 
   build-arch:
@@ -92,14 +96,15 @@ jobs:
 
           A Persian Wordle game for Parch Linux.
 
-          Assets attached below include a Flatpak bundle and an Arch Linux package.
+          Assets attached below include Flatpak bundles (x86_64 & aarch64) and an Arch Linux package.
           EOF
 
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            flatpak-bundle/*
+            flatpak-bundle-x86_64/*
+            flatpak-bundle-aarch64/*
             arch-package/*
           body_path: release-notes.md
           tag_name: ${{ github.event.release.tag_name }}

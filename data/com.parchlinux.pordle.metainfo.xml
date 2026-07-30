@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.parchlinux.pordle</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-only</project_license>
+  <name>پردل</name>
+  <summary>یک بازی وردل فارسی برای پارچ لینوکس</summary>
+
+  <description>
+    <p>
+      پردل یک بازی وردل فارسی بر پایه GTK4 و Libadwaita است. هر روز یک کلمه پنج حرفی جدید حدس بزنید یا در حالت آزاد تمرین کنید.
+    </p>
+    <p>
+      Pordle is a Persian Wordle game built with Rust, GTK4, and Libadwaita for Parch Linux. Guess a daily 5-letter Persian word or practice with unlimited words.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">com.parchlinux.pordle.desktop</launchable>
+
+  <url type="homepage">https://parchlinux.com</url>
+  <url type="bugtracker">https://github.com/parchlinux/pordle/issues</url>
+  <url type="vcs-browser">https://github.com/parchlinux/pordle</url>
+
+  <developer_name>تیم پارچ لینوکس / Parch Linux Team</developer_name>
+
+  <releases>
+    <release version="0.1.1" date="2026-07-31">
+      <description>
+        <p>انتشار نسخه 0.1.1 با اصلاح اعتبارسنجی کلمات، رنگ‌های بهبودیافته، حالت کنتراست بالا و نمودار آمار بازی.</p>
+      </description>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1" />
+
+  <branding>
+    <color type="primary" scheme_preference="light">#538d4e</color>
+    <color type="primary" scheme_preference="dark">#538d4e</color>
+  </branding>
+</component>
