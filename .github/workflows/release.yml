@@ -8,35 +8,6 @@ permissions:
   contents: write
 
 jobs:
-  build-binary:
-    name: Build Linux binary
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install system deps
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libgtk-4-dev libadwaita-1-dev libsqlite3-dev
-
-      - name: Build release binary
-        run: cargo build --release
-
-      - name: Collect assets
-        run: |
-          mkdir -p assets
-          cp target/release/pordle assets/
-          cp data/com.parchlinux.pordle.desktop assets/
-          cp data/icons/com.parchlinux.pordle.svg assets/
-          cp LICENSE assets/
-
-      - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-binary
-          path: assets/
-          if-no-files-found: error
-
   build-flatpak:
     name: Build Flatpak
     runs-on: ubuntu-latest
@@ -97,7 +68,7 @@ jobs:
 
   release:
     name: Create release
-    needs: [build-binary, build-flatpak, build-arch]
+    needs: [build-flatpak, build-arch]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -115,15 +86,13 @@ jobs:
 
           A Persian Wordle game for Parch Linux.
 
-          Assets attached below include the Linux binary with desktop
-          file and icon, a Flatpak bundle, and an Arch Linux package.
+          Assets attached below include a Flatpak bundle and an Arch Linux package.
           EOF
 
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            linux-binary/*
             flatpak-bundle/*
             arch-package/*
           body_path: release-notes.md

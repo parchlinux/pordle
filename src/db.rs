@@ -1,10 +1,12 @@
-use crate::persian::is_persian_letter;
+use crate::persian::{is_persian_letter, normalize_persian_str};
 use rusqlite::{Connection, Result as SqlResult, params};
 use std::path::PathBuf;
 use std::fs;
 
 const DB_FILENAME: &str = "pordle.db";
 const APP_DIR: &str = "pordle";
+const EMBEDDED_WORDS: &str = include_str!("../data/words.txt");
+
 
 pub struct DatabaseManager {
     conn: Connection,
@@ -64,8 +66,7 @@ impl DatabaseManager {
     }
 
     pub fn add_word(&mut self, word: &str) -> Result<AddWordResult, rusqlite::Error> {
-        let word = word.trim();
-        let clean: String = word.trim_matches('\'').trim_matches('"').to_string();
+        let clean = normalize_persian_str(word.trim().trim_matches('\'').trim_matches('"'));
 
         if clean.chars().count() != 5 || !clean.chars().all(is_persian_letter) {
             return Ok(AddWordResult::Invalid);
@@ -83,11 +84,11 @@ impl DatabaseManager {
     }
 
     pub fn is_valid_word(&self, word: &str) -> bool {
-        let word_lower = word.to_lowercase();
+        let word_norm = normalize_persian_str(word);
         self.conn
             .query_row(
                 "SELECT 1 FROM words WHERE word = ?1",
-                params![word_lower],
+                params![word_norm],
                 |_| Ok(()),
             )
             .is_ok()
@@ -112,19 +113,30 @@ impl DatabaseManager {
         if count == 0 {
             return None;
         }
-        let days = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs()
-            / 86400;
-        let index = (days as usize) % count;
+        let days = glib::DateTime::now_local()
+            .map(|dt| {
+                let utc_secs = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64;
+                let offset_secs = dt.utc_offset().as_seconds();
+                ((utc_secs + offset_secs) / 86400) as usize
+            })
+            .unwrap_or_else(|_| {
+                let secs = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
+                (secs / 86400) as usize
+            });
+        let index = days % count;
         self.word_at_index(index)
     }
 
     fn word_at_index(&self, index: usize) -> Option<String> {
         self.conn
             .query_row(
-                "SELECT word FROM words ORDER BY rowid LIMIT 1 OFFSET ?1",
+                "SELECT word FROM words ORDER BY word ASC LIMIT 1 OFFSET ?1",
                 params![index as i64],
                 |row| row.get(0),
             )
@@ -162,6 +174,32 @@ impl DatabaseManager {
         Ok((total, added))
     }
 
+    pub fn import_from_string(&mut self, content: &str) -> (usize, usize) {
+        let mut total = 0;
+        let mut added = 0;
+
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() {
+                continue;
+            }
+
+            for token in line.split(|c: char| c == ',' || c == '[' || c == ']') {
+                let token = token.trim().trim_matches('\'').trim_matches('"');
+                if token.is_empty() {
+                    continue;
+                }
+
+                total += 1;
+                if let Ok(AddWordResult::Added) = self.add_word(token) {
+                    added += 1;
+                }
+            }
+        }
+
+        (total, added)
+    }
+
     pub fn populate_from_default_files(&mut self) {
         let word_count = self.word_count();
         if word_count > 0 {
@@ -183,6 +221,10 @@ impl DatabaseManager {
                 }
             }
         }
+
+        // Fallback to compiled-in default word list
+        let (total, added) = self.import_from_string(EMBEDDED_WORDS);
+        eprintln!("Imported {}/{} default embedded words", added, total);
     }
 
     pub fn get_stats(&self) -> GameStats {
@@ -294,3 +336,21 @@ pub struct GameStats {
     pub max_streak: i32,
     pub guess_distribution: [i32; 6],
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_embedded_word_seeding() {
+        let conn = Connection::open_in_memory().unwrap();
+        let mut db = DatabaseManager { conn };
+        db.migrate().unwrap();
+        assert_eq!(db.word_count(), 0);
+        db.populate_from_default_files();
+        assert_eq!(db.word_count(), 993);
+        assert!(db.is_valid_word("آزادی"));
+        assert!(db.is_valid_word("اسلام"));
+    }
+}
+

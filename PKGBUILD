@@ -1,6 +1,6 @@
 # Maintainer: Parch Linux Team
 pkgname=pordle
-pkgver=0.1
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="A Persian Wordle game for Parch Linux"
 arch=('x86_64')
@@ -32,4 +32,6 @@ package() {
 
     install -Dm644 data/icons/com.parchlinux.pordle.svg \
         "$pkgdir/usr/share/icons/hicolor/scalable/apps/com.parchlinux.pordle.svg"
+
+    install -Dm644 data/words.txt "$pkgdir/usr/share/pordle/words.txt"
 }

@@ -1,9 +1,10 @@
 [package]
 name = "pordle"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "AGPL-3.0"
 authors = ["Parch Linux Team"]
+build = "build.rs"
 
 [dependencies]
 gtk = { package = "gtk4", version = "0.11" }

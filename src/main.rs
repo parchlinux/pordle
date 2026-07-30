@@ -9,7 +9,7 @@ use clap::Parser;
 #[derive(Parser)]
 #[command(
     name = "پردل",
-    version = "0.1.0",
+    version = "0.1.1",
     about = "A Persian Wordle game for Parch Linux"
 )]
 struct Cli {
@@ -61,7 +61,7 @@ fn run_gui() {
 
     adw::init().expect("Failed to initialize libadwaita");
 
-    adw::StyleManager::default().set_color_scheme(adw::ColorScheme::PreferLight);
+    adw::StyleManager::default().set_color_scheme(adw::ColorScheme::Default);
 
     gtk::Widget::set_default_direction(gtk::TextDirection::Rtl);
 

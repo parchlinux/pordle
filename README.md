@@ -23,26 +23,40 @@ Daily mode gives everyone the same word based on the date and saves your result 
 
 **رنگ‌ها**
 
-سبز یعنی حرف در جای درست، زرد یعنی حرف در کلمه هست اما جای آن درست نیست، و قرمز یعنی حرف در کلمه نیست.
+سبز یعنی حرف در جای درست، زرد یعنی حرف در کلمه هست اما جای آن درست نیست، و خاکستری تیره یعنی حرف در کلمه نیست.
 
 **Colors**
 
-Green means the letter is in the right position, yellow means the letter is in the word but in the wrong position, and red means the letter is not in the word.
+Green means the letter is in the right position, yellow means the letter is in the word but in the wrong position, and dark gray means the letter is not in the word.
 
 <br>
 
-**ساخت و نصب**
+**منبع کلمات / Word Database**
 
-```
+بانک اطلاعات کلمات فارسی اولیه این برنامه از پروژه [wordle-farsi](https://github.com/PedramH/wordle-farsi) توسط PedramH استخراج شده است.
+
+The initial Persian dictionary used by Pordle is sourced from [wordle-farsi by PedramH](https://github.com/PedramH/wordle-farsi).
+
+<br>
+
+**مشارکت و افزودن کلمات جدید / Contributing**
+
+اگر می‌خواهید کلمه جدیدی اضافه کنید یا در پروژه مشارکت داشته باشید، لطفاً فایل [CONTRIBUTING.md](CONTRIBUTING.md) را مطالعه کنید.
+
+To add new 5-letter Persian words or contribute to the project, please refer to [CONTRIBUTING.md](CONTRIBUTING.md).
+
+<br>
+
+**ساخت و نصب / Building**
+
+```bash
 cargo build --release
 ./target/release/pordle
 ```
 
-وابستگی‌ها: GTK4، libadwaita، و Rust. کلمات از فایل words.txt در دایرکتوری دیتا یا /usr/share/pordle/words.txt بارگذاری می‌شوند.
+وابستگی‌ها: GTK4، libadwaita، و Rust. کلمات به صورت پیش‌فرض در خود برنامه کامپایل شده‌اند و امکان اضافه کردن از `data/words.txt` نیز وجود دارد.
 
-**Building**
-
-Dependencies are GTK4, libadwaita, and Rust. Words are loaded from words.txt in the data directory or /usr/share/pordle/words.txt on first run.
+Dependencies are GTK4, libadwaita, and Rust. Words are embedded directly inside the application binary on build.
 
 <br>
 

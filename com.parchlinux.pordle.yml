@@ -28,9 +28,10 @@ modules:
       - install -Dm644 data/com.parchlinux.pordle.desktop /app/share/applications/com.parchlinux.pordle.desktop
       - install -Dm644 data/icons/com.parchlinux.pordle.svg
         /app/share/icons/hicolor/scalable/apps/com.parchlinux.pordle.svg
+      - install -Dm644 data/words.txt /app/share/pordle/words.txt
 
     sources:
       - type: archive
-        url: https://github.com/parchlinux/pordle/archive/v0.1.tar.gz
+        url: https://github.com/parchlinux/pordle/archive/0.1.1.tar.gz
         sha256: SKIP
       - generated/cargo-sources.json

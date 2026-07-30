@@ -34,8 +34,8 @@
 }
 
 .tile-absent {
-  background: #c33c3c;
-  border: 2px solid #c33c3c;
+  background: #3a3a3c;
+  border: 2px solid #3a3a3c;
   color: #ffffff;
 }
 
@@ -69,9 +69,24 @@
 }
 
 .key-absent {
-  background: #c33c3c;
+  background: #3a3a3c;
   color: #ffffff;
   border: none;
+}
+
+/* High Contrast Mode Overrides */
+.high-contrast .tile-correct,
+.high-contrast .key-correct {
+  background: #f5793a;
+  border-color: #f5793a;
+  color: #ffffff;
+}
+
+.high-contrast .tile-misplaced,
+.high-contrast .key-misplaced {
+  background: #85c0f9;
+  border-color: #85c0f9;
+  color: #ffffff;
 }
 
 .special-key {
@@ -118,4 +133,25 @@
 
 .mode-btn:checked:hover {
   background: @accent_bg_color;
+}
+
+/* Stats Dialog Styling */
+.stat-number {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.dist-bar {
+  background: #538d4e;
+  color: #ffffff;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-weight: bold;
+  font-size: 12px;
+  min-width: 20px;
 }

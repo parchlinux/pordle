@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 use adw::prelude::*;
 use adw::{ApplicationWindow, Toast};
+use gtk::gdk;
 use gtk::{Box, Orientation, ToggleButton};
 
 use crate::db::DatabaseManager;
@@ -55,11 +56,163 @@ fn pick_word(db: &DatabaseManager, mode: &GameMode) -> String {
 }
 
 fn today_key() -> String {
-    let secs = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-    (secs / 86400).to_string()
+    glib::DateTime::now_local()
+        .and_then(|dt| dt.format("%Y-%m-%d"))
+        .map(|s| s.to_string())
+        .unwrap_or_else(|_| {
+            let secs = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            (secs / 86400).to_string()
+        })
+}
+
+fn generate_emoji_share(game: &Game) -> String {
+    let mut share = String::from("پردل\n");
+    for row in 0..game.current_row {
+        for col in 0..WORD_LENGTH {
+            match game.results[row][col] {
+                Some(crate::game::state::LetterState::Correct) => share.push('🟩'),
+                Some(crate::game::state::LetterState::Misplaced) => share.push('🟨'),
+                Some(crate::game::state::LetterState::Absent) => share.push('⬛'),
+                _ => {}
+            }
+        }
+        share.push('\n');
+    }
+    share
+}
+
+fn show_stats_dialog(
+    parent: &ApplicationWindow,
+    db: &DatabaseManager,
+    game: &Game,
+    toast_overlay: &adw::ToastOverlay,
+) {
+    let stats = db.get_stats();
+    let played = stats.games_played;
+    let won = stats.games_won;
+    let streak = stats.current_streak;
+    let max_streak = stats.max_streak;
+    let pct = if played > 0 {
+        (won as f64 / played as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    let dialog = gtk::Window::builder()
+        .title("آمار بازی")
+        .transient_for(parent)
+        .modal(true)
+        .default_width(320)
+        .default_height(420)
+        .resizable(false)
+        .build();
+
+    let root = Box::new(Orientation::Vertical, 16);
+    root.set_margin_top(16);
+    root.set_margin_bottom(16);
+    root.set_margin_start(16);
+    root.set_margin_end(16);
+
+    let title_label = gtk::Label::builder()
+        .label("آمار کل")
+        .css_classes(["title-2"])
+        .build();
+    root.append(&title_label);
+
+    let stats_grid = gtk::Grid::builder()
+        .column_spacing(12)
+        .row_spacing(6)
+        .halign(gtk::Align::Center)
+        .build();
+
+    let create_stat_box = |value: String, label: &str| {
+        let b = Box::new(Orientation::Vertical, 2);
+        b.set_halign(gtk::Align::Center);
+        let val_lbl = gtk::Label::builder()
+            .label(&value)
+            .css_classes(["stat-number"])
+            .build();
+        let name_lbl = gtk::Label::builder()
+            .label(label)
+            .css_classes(["stat-label"])
+            .build();
+        b.append(&val_lbl);
+        b.append(&name_lbl);
+        b
+    };
+
+    stats_grid.attach(&create_stat_box(played.to_string(), "بازی‌ها"), 0, 0, 1, 1);
+    stats_grid.attach(&create_stat_box(format!("{:.0}%", pct), "برد"), 1, 0, 1, 1);
+    stats_grid.attach(&create_stat_box(streak.to_string(), "رکورد"), 2, 0, 1, 1);
+    stats_grid.attach(&create_stat_box(max_streak.to_string(), "بیشترین"), 3, 0, 1, 1);
+
+    root.append(&stats_grid);
+
+    let dist_title = gtk::Label::builder()
+        .label("توزیع حدس‌ها")
+        .css_classes(["title-3"])
+        .halign(gtk::Align::Start)
+        .build();
+    root.append(&dist_title);
+
+    let dist_box = Box::new(Orientation::Vertical, 4);
+    let max_dist = *stats.guess_distribution.iter().max().unwrap_or(&1).max(&1);
+
+    for (i, &count) in stats.guess_distribution.iter().enumerate() {
+        let row = Box::new(Orientation::Horizontal, 8);
+        let num_lbl = gtk::Label::new(Some(&(i + 1).to_string()));
+        num_lbl.set_width_chars(2);
+        row.append(&num_lbl);
+
+        let bar_width = if max_dist > 0 {
+            ((count as f64 / max_dist as f64) * 100.0).max(8.0) as i32
+        } else {
+            8
+        };
+
+        let bar = gtk::Label::builder()
+            .label(&count.to_string())
+            .css_classes(["dist-bar"])
+            .halign(gtk::Align::Start)
+            .build();
+        bar.set_size_request(bar_width * 2, -1);
+        row.append(&bar);
+
+        dist_box.append(&row);
+    }
+    root.append(&dist_box);
+
+    let btn_box = Box::new(Orientation::Horizontal, 8);
+    btn_box.set_halign(gtk::Align::Center);
+
+    let share_btn = gtk::Button::with_label("اشتراک‌گذاری 📋");
+    share_btn.set_css_classes(&["suggested-action"]);
+    let emoji_text = generate_emoji_share(game);
+    let share_toast = toast_overlay.clone();
+    let win_dialog = dialog.clone();
+    share_btn.connect_clicked(move |_| {
+        if let Some(display) = gdk::Display::default() {
+            display.clipboard().set_text(&emoji_text);
+        }
+        share_toast.add_toast(Toast::new("نتیجه در حافظه کپی شد!"));
+        win_dialog.close();
+    });
+    btn_box.append(&share_btn);
+
+    let close_btn = gtk::Button::with_label("بستن");
+    let dlg = dialog.clone();
+    close_btn.connect_clicked(move |_| {
+        dlg.close();
+    });
+    btn_box.append(&close_btn);
+
+    root.append(&btn_box);
+
+    dialog.set_child(Some(&root));
+    dialog.present();
 }
 
 impl GameWindow {
@@ -78,12 +231,16 @@ impl GameWindow {
         let (game, restored) = {
             let db_ref = db.borrow();
             if *mode.borrow() == GameMode::Daily {
+                let daily_answer = pick_word(&db_ref, &GameMode::Daily);
                 if let Some(result) = db_ref.load_daily_result(&today) {
-                    let g = Game::restore_with_guesses(result.answer, &result.guesses);
-                    (g, true)
+                    if result.answer == daily_answer {
+                        let g = Game::restore_with_guesses(result.answer, &result.guesses);
+                        (g, true)
+                    } else {
+                        (Game::new(daily_answer), false)
+                    }
                 } else {
-                    let answer = pick_word(&db_ref, &GameMode::Daily);
-                    (Game::new(answer), false)
+                    (Game::new(daily_answer), false)
                 }
             } else {
                 let answer = pick_word(&db_ref, &GameMode::Practice);
@@ -125,7 +282,7 @@ impl GameWindow {
         let popover = gtk::Popover::new();
         popover.set_autohide(true);
 
-        let popover_box = Box::new(Orientation::Vertical, 0);
+        let popover_box = Box::new(Orientation::Vertical, 4);
         popover_box.set_margin_top(6);
         popover_box.set_margin_bottom(6);
         popover_box.set_margin_start(6);
@@ -135,11 +292,16 @@ impl GameWindow {
         stats_btn.set_css_classes(&["flat"]);
         stats_btn.set_halign(gtk::Align::Fill);
 
+        let hc_btn = ToggleButton::with_label("کنتراست بالا");
+        hc_btn.set_css_classes(&["flat"]);
+        hc_btn.set_halign(gtk::Align::Fill);
+
         let about_btn = gtk::Button::with_label("درباره پردل");
         about_btn.set_css_classes(&["flat"]);
         about_btn.set_halign(gtk::Align::Fill);
 
         popover_box.append(&stats_btn);
+        popover_box.append(&hc_btn);
         popover_box.append(&about_btn);
         popover.set_child(Some(&popover_box));
         hamburger.set_popover(Some(&popover));
@@ -178,6 +340,15 @@ impl GameWindow {
 
         window.set_icon_name(Some("com.parchlinux.pordle"));
         window.present();
+
+        let win_ref = window.clone();
+        hc_btn.connect_toggled(move |btn| {
+            if btn.is_active() {
+                win_ref.add_css_class("high-contrast");
+            } else {
+                win_ref.remove_css_class("high-contrast");
+            }
+        });
 
         let gw = Self {
             window,
@@ -227,11 +398,16 @@ impl GameWindow {
             if btn.is_active() {
                 *daily_mode.borrow_mut() = GameMode::Daily;
                 let db_ref = daily_db.borrow();
+                let daily_answer = pick_word(&db_ref, &GameMode::Daily);
                 let (g, _restored) =
                     if let Some(result) = db_ref.load_daily_result(&daily_today) {
-                        (Game::restore_with_guesses(result.answer, &result.guesses), true)
+                        if result.answer == daily_answer {
+                            (Game::restore_with_guesses(result.answer, &result.guesses), true)
+                        } else {
+                            (Game::new(daily_answer), false)
+                        }
                     } else {
-                        (Game::new(pick_word(&db_ref, &GameMode::Daily)), false)
+                        (Game::new(daily_answer), false)
                     };
                 drop(db_ref);
                 *daily_game.borrow_mut() = g;
@@ -291,7 +467,7 @@ impl GameWindow {
             let about = adw::AboutDialog::builder()
                 .application_name("پردل")
                 .application_icon("com.parchlinux.pordle")
-                .version("0.1.0")
+                .version("0.1.1")
                 .comments("یک بازی وردل فارسی برای پارچ لینوکس")
                 .website("https://parchlinux.com")
                 .issue_url("https://github.com/parchlinux/pordle")
@@ -301,23 +477,17 @@ impl GameWindow {
         });
 
         let stats_db = self.db.clone();
+        let stats_game = self.game.clone();
         let stats_toast = self.toast_overlay.clone();
+        let window_parent = self.window.clone();
+
         stats_btn.connect_clicked(move |_| {
-            let stats = stats_db.borrow().get_stats();
-            let played = stats.games_played;
-            let won = stats.games_won;
-            let streak = stats.current_streak;
-            let max_streak = stats.max_streak;
-            let pct = if played > 0 {
-                (won as f64 / played as f64) * 100.0
-            } else {
-                0.0
-            };
-            let msg = format!(
-                "بازی: {} | برد: {} ({:.0}%) | رکورد: {} | بیشترین: {}",
-                played, won, pct, streak, max_streak
+            show_stats_dialog(
+                &window_parent,
+                &stats_db.borrow(),
+                &stats_game.borrow(),
+                &stats_toast,
             );
-            stats_toast.add_toast(Toast::new(&msg));
         });
     }
 
