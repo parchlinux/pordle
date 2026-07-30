@@ -77,7 +77,7 @@ jobs:
         run: |
           pacman-key --init
           pacman-key --populate archlinux
-          pacman -Syu --noconfirm --needed base-devel cargo gtk4 libadwaita
+          pacman -Syu --noconfirm --needed base-devel cargo gtk4 libadwaita sqlite
 
       - uses: actions/checkout@v4
 

@@ -7,7 +7,7 @@ arch=('x86_64')
 url="https://github.com/parchlinux/pordle"
 license=('AGPL3')
 depends=('gtk4' 'libadwaita' 'hicolor-icon-theme')
-makedepends=('cargo')
+makedepends=('cargo' 'sqlite')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/parchlinux/pordle/archive/$pkgver.tar.gz")
 sha256sums=('SKIP')
 
