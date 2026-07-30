@@ -99,11 +99,13 @@ jobs:
     name: Create release
     needs: [build-binary, build-flatpak, build-arch]
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - uses: actions/checkout@v4
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
 
       - name: Generate release notes
         run: |
