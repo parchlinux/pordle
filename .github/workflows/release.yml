@@ -63,7 +63,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: arch-package
-          path: '*.pkg.tar.zst'
+          path: |
+            *.pkg.tar.zst
+            !*-debug-*.pkg.tar.zst
           if-no-files-found: error
 
   release:
