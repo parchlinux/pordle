@@ -49,7 +49,6 @@ impl Keyboard {
                 let ch = letter_str.chars().next().unwrap();
                 let button = Button::with_label(letter_str);
                 button.set_css_classes(&["keyboard-key", "key-unused"]);
-                button.set_size_request(34, 46);
 
                 let cb = callback.clone();
                 button.connect_clicked(move |_| {
@@ -70,7 +69,6 @@ impl Keyboard {
 
         let enter_button = Button::with_label("تأیید");
         enter_button.set_css_classes(&["keyboard-key", "special-key", "key-unused"]);
-        enter_button.set_size_request(44, 46);
 
         let cb = callback.clone();
         enter_button.connect_clicked(move |_| {
@@ -82,7 +80,6 @@ impl Keyboard {
 
         let backspace_button = Button::with_label("⌫");
         backspace_button.set_css_classes(&["keyboard-key", "special-key", "key-unused"]);
-        backspace_button.set_size_request(44, 46);
 
         let cb = callback.clone();
         backspace_button.connect_clicked(move |_| {

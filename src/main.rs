@@ -9,7 +9,7 @@ use clap::Parser;
 #[derive(Parser)]
 #[command(
     name = "پردل",
-    version = "0.1.1",
+    version = "0.2.0",
     about = "A Persian Wordle game for Parch Linux"
 )]
 struct Cli {

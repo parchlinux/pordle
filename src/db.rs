@@ -106,6 +106,7 @@ impl DatabaseManager {
                 row.get(0)
             })
             .ok()
+            .map(|w: String| normalize_persian_str(&w))
     }
 
     pub fn daily_word(&self) -> Option<String> {
@@ -141,6 +142,7 @@ impl DatabaseManager {
                 |row| row.get(0),
             )
             .ok()
+            .map(|w: String| normalize_persian_str(&w))
     }
 
     pub fn import_from_file(&mut self, path: &str) -> SqlResult<(usize, usize)> {
@@ -303,8 +305,10 @@ impl DatabaseManager {
                     let answer: String = row.get(1)?;
                     let won: bool = row.get::<_, i32>(2)? != 0;
                     let guesses_json: String = row.get(3)?;
-                    let guesses: Vec<String> = serde_json::from_str(&guesses_json).unwrap_or_default();
-                    Ok(DailyResult { date, answer, won, guesses })
+                    let guesses: Vec<String> = serde_json::from_str(&guesses_json)
+                        .map(|g: Vec<String>| g.iter().map(|s| normalize_persian_str(s)).collect())
+                        .unwrap_or_default();
+                    Ok(DailyResult { date, answer: normalize_persian_str(&answer), won, guesses })
                 },
             )
             .ok()

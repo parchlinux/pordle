@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use adw::prelude::*;
@@ -10,6 +10,7 @@ use crate::db::DatabaseManager;
 use crate::game::state::{Game, Phase, WORD_LENGTH};
 use crate::persian::is_persian_letter;
 use crate::ui::board::Board;
+use crate::ui::help;
 use crate::ui::keyboard::{KeyEvent, Keyboard};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -26,6 +27,7 @@ pub struct GameWindow {
     db: Rc<RefCell<DatabaseManager>>,
     mode: Rc<RefCell<GameMode>>,
     toast_overlay: adw::ToastOverlay,
+    _size_provider: gtk::CssProvider,
 }
 
 fn load_css() {
@@ -38,6 +40,117 @@ fn load_css() {
             &provider,
             gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
+    }
+}
+
+const BASE_TILE: f64 = 52.0;
+const BASE_KEY_W: f64 = 34.0;
+const BASE_KEY_H: f64 = 46.0;
+const BOARD_COLS: f64 = 5.0;
+const BOARD_ROWS: f64 = 6.0;
+const GRID_SPACING: f64 = 4.0;
+const GRID_MARGIN: f64 = 8.0;
+const KBD_KEYS_PER_ROW: f64 = 9.0;
+const KBD_ROWS: f64 = 4.0;
+const KBD_ROW_SPACING: f64 = 4.0;
+const KBD_COL_SPACING: f64 = 1.0;
+const KBD_VERTICAL_MARGIN: f64 = 10.0;
+const TILE_MARGIN: f64 = 2.0;
+const KEY_MARGIN: f64 = 1.0;
+const HEADER_H: f64 = 52.0;
+const SAFE_MARGIN: f64 = 24.0;
+
+fn board_width(tile: f64) -> f64 {
+    BOARD_COLS * (tile + 2.0 * TILE_MARGIN) + (BOARD_COLS - 1.0) * GRID_SPACING + 2.0 * GRID_MARGIN
+}
+
+fn board_height(tile: f64) -> f64 {
+    BOARD_ROWS * (tile + 2.0 * TILE_MARGIN) + (BOARD_ROWS - 1.0) * GRID_SPACING + 2.0 * GRID_MARGIN
+}
+
+fn keyboard_width(key_w: f64) -> f64 {
+    KBD_KEYS_PER_ROW * (key_w + 2.0 * KEY_MARGIN) + (KBD_KEYS_PER_ROW - 1.0) * KBD_COL_SPACING + 4.0
+}
+
+fn keyboard_height(key_h: f64) -> f64 {
+    KBD_ROWS * (key_h + 2.0 * KEY_MARGIN) + (KBD_ROWS - 1.0) * KBD_ROW_SPACING + KBD_VERTICAL_MARGIN
+}
+
+fn content_width(tile: f64, key_w: f64) -> f64 {
+    board_width(tile).max(keyboard_width(key_w))
+}
+
+fn content_height(tile: f64, key_h: f64) -> f64 {
+    HEADER_H + board_height(tile) + keyboard_height(key_h)
+}
+
+fn fit_scale(screen_w: i32, screen_h: i32) -> f64 {
+    let base_w = content_width(BASE_TILE, BASE_KEY_W);
+    let base_h = content_height(BASE_TILE, BASE_KEY_H);
+    let s_w = (screen_w as f64 - SAFE_MARGIN) / base_w;
+    let s_h = (screen_h as f64 - SAFE_MARGIN) / base_h;
+    s_w.min(s_h).clamp(0.5, 1.0)
+}
+
+fn layout_scale(screen_w: i32, screen_h: i32) -> f64 {
+    let mut scale = fit_scale(screen_w, screen_h);
+    let tile = (BASE_TILE * scale).round().max(30.0);
+    let key_w = (BASE_KEY_W * scale).round().max(24.0);
+    let key_h = (BASE_KEY_H * scale).round().max(34.0);
+    let need_w = content_width(tile, key_w);
+    let need_h = content_height(tile, key_h);
+    let s = ((screen_w as f64 - SAFE_MARGIN) / need_w)
+        .min((screen_h as f64 - SAFE_MARGIN) / need_h);
+    if s < scale {
+        scale = s.clamp(0.5, scale);
+    }
+    scale
+}
+
+fn layout_sizes(screen_w: i32, screen_h: i32) -> (f64, f64, f64, i32, i32) {
+    let scale = layout_scale(screen_w, screen_h);
+    let tile = (BASE_TILE * scale).round().max(30.0);
+    let key_w = (BASE_KEY_W * scale).round().max(24.0);
+    let key_h = (BASE_KEY_H * scale).round().max(34.0);
+    let win_w = content_width(tile, key_w).ceil() as i32;
+    let win_h = content_height(tile, key_h).ceil() as i32;
+    (scale, tile, key_w, win_w, win_h)
+}
+
+fn primary_monitor_size() -> Option<(i32, i32)> {
+    let display = gtk::gdk::Display::default()?;
+    let monitors = display.monitors();
+    let monitor = monitors.item(0)?.downcast::<gdk::Monitor>().ok()?;
+    let geo = monitor.geometry();
+    Some((geo.width(), geo.height()))
+}
+
+fn build_size_css(scale: f64) -> String {
+    let tile = (BASE_TILE * scale).round().max(30.0);
+    let tile_font = (28.0 * scale).round().max(18.0);
+    let key_w = (BASE_KEY_W * scale).round().max(24.0);
+    let key_h = (BASE_KEY_H * scale).round().max(34.0);
+    let key_font = (15.0 * scale).round().max(12.0);
+    let special_w = (44.0 * scale).round().max(30.0);
+    let special_font = (12.0 * scale).round().max(10.0);
+    let mode_font = (13.0 * scale).round().max(11.0);
+    format!(
+        ".tile {{ min-width: {tile}px; min-height: {tile}px; font-size: {tile_font}px; }}\n\
+         .keyboard-key {{ min-width: {key_w}px; min-height: {key_h}px; font-size: {key_font}px; }}\n\
+         .special-key {{ min-width: {special_w}px; font-size: {special_font}px; }}\n\
+         .mode-btn {{ font-size: {mode_font}px; }}"
+    )
+}
+
+fn apply_size_css(provider: &gtk::CssProvider, scale: f64) {
+    provider.load_from_data(&build_size_css(scale));
+}
+
+fn refit_window(provider: &gtk::CssProvider, window: &ApplicationWindow) {
+    if let Some((screen_w, screen_h)) = primary_monitor_size() {
+        let (scale, _tile, _key_w, win_w, win_h) = layout_sizes(screen_w, screen_h);
+        apply_size_css(provider, scale);
+        window.set_default_size(win_w, win_h);
     }
 }
 
@@ -219,6 +332,19 @@ impl GameWindow {
     pub fn new(app: &adw::Application) -> Self {
         load_css();
 
+        let size_provider = gtk::CssProvider::new();
+        if let Some(display) = gtk::gdk::Display::default() {
+            gtk::style_context_add_provider_for_display(
+                &display,
+                &size_provider,
+                gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+            );
+        }
+
+        let (screen_w, screen_h) = primary_monitor_size().unwrap_or((1280, 720));
+        let (scale, _tile, _key_w, win_w, win_h) = layout_sizes(screen_w, screen_h);
+        apply_size_css(&size_provider, scale);
+
         let db = Rc::new(RefCell::new(DatabaseManager::open_or_default()));
         {
             let mut db_mut = db.borrow_mut();
@@ -256,6 +382,15 @@ impl GameWindow {
 
         let header_bar = adw::HeaderBar::new();
 
+        let back_button = gtk::Button::from_icon_name("go-previous-symbolic");
+        back_button.set_tooltip_text(Some("بازگشت"));
+        back_button.set_visible(false);
+        header_bar.pack_start(&back_button);
+
+        let app_title = gtk::Label::new(Some("پردل"));
+        app_title.add_css_class("title");
+        header_bar.set_title_widget(Some(&app_title));
+
         let mode_box = Box::new(Orientation::Horizontal, 0);
         mode_box.set_css_classes(&["mode-switch"]);
         mode_box.set_halign(gtk::Align::Center);
@@ -269,10 +404,10 @@ impl GameWindow {
 
         mode_box.append(&daily_btn);
         mode_box.append(&practice_btn);
-        header_bar.set_title_widget(Some(&mode_box));
 
         let new_game_button = gtk::Button::from_icon_name("view-refresh-symbolic");
         new_game_button.set_tooltip_text(Some("بازی جدید"));
+        new_game_button.set_visible(false);
         header_bar.pack_end(&new_game_button);
 
         let hamburger = gtk::MenuButton::new();
@@ -288,6 +423,10 @@ impl GameWindow {
         popover_box.set_margin_start(6);
         popover_box.set_margin_end(6);
 
+        let help_btn = gtk::Button::with_label("راهنما");
+        help_btn.set_css_classes(&["flat"]);
+        help_btn.set_halign(gtk::Align::Fill);
+
         let stats_btn = gtk::Button::with_label("آمار بازی");
         stats_btn.set_css_classes(&["flat"]);
         stats_btn.set_halign(gtk::Align::Fill);
@@ -300,6 +439,7 @@ impl GameWindow {
         about_btn.set_css_classes(&["flat"]);
         about_btn.set_halign(gtk::Align::Fill);
 
+        popover_box.append(&help_btn);
         popover_box.append(&stats_btn);
         popover_box.append(&hc_btn);
         popover_box.append(&about_btn);
@@ -324,7 +464,36 @@ impl GameWindow {
         main_box.append(&clamp);
         main_box.append(keyboard.widget());
 
-        toast_overlay.set_child(Some(&main_box));
+        let started = Rc::new(Cell::new(false));
+        let page_active = Rc::new(Cell::new(false));
+
+        let stack = gtk::Stack::new();
+        stack.set_transition_type(gtk::StackTransitionType::Crossfade);
+
+        let welcome_page = help::build_welcome_page(
+            {
+                let stack = stack.clone();
+                let started = started.clone();
+                move || {
+                    started.set(true);
+                    stack.set_visible_child_name("game");
+                }
+            },
+            {
+                let stack = stack.clone();
+                move || {
+                    stack.set_visible_child_name("help");
+                }
+            },
+        );
+        let help_page = help::build_help_page();
+
+        stack.add_named(&main_box, Some("game"));
+        stack.add_named(&welcome_page, Some("welcome"));
+        stack.add_named(&help_page, Some("help"));
+        stack.set_visible_child_name("welcome");
+
+        toast_overlay.set_child(Some(&stack));
 
         let content = Box::new(Orientation::Vertical, 0);
         content.append(&header_bar);
@@ -333,13 +502,63 @@ impl GameWindow {
         let window = ApplicationWindow::builder()
             .application(app)
             .title("پردل")
-            .default_width(380)
-            .default_height(720)
+            .default_width(win_w)
+            .default_height(win_h)
             .content(&content)
             .build();
 
         window.set_icon_name(Some("com.parchlinux.pordle"));
         window.present();
+
+        if let Some(display) = gdk::Display::default() {
+            let monitors = display.monitors();
+            for i in 0..monitors.n_items() {
+                if let Some(monitor) = monitors.item(i).and_then(|o| o.downcast::<gdk::Monitor>().ok()) {
+                    let win_ref = window.clone();
+                    let provider_ref = size_provider.clone();
+                    monitor.connect_invalidate(move |_| {
+                        refit_window(&provider_ref, &win_ref);
+                    });
+                }
+            }
+        }
+
+        let back_ref = back_button.clone();
+        let new_game_ref = new_game_button.clone();
+        let mode_box_ref = mode_box.clone();
+        let app_title_ref = app_title.clone();
+        let header_ref = header_bar.clone();
+        let page_active_ref = page_active.clone();
+        stack.connect_visible_child_name_notify(move |stack| {
+            let name = stack
+                .visible_child_name()
+                .map(|s| s.to_string())
+                .unwrap_or_default();
+            let on_game = name == "game";
+            page_active_ref.set(on_game);
+            back_ref.set_visible(name == "help");
+            new_game_ref.set_visible(on_game);
+            if on_game {
+                header_ref.set_title_widget(Some(&mode_box_ref));
+            } else {
+                header_ref.set_title_widget(Some(&app_title_ref));
+            }
+        });
+
+        let stack_back = stack.clone();
+        let started_back = started.clone();
+        back_button.connect_clicked(move |_| {
+            if started_back.get() {
+                stack_back.set_visible_child_name("game");
+            } else {
+                stack_back.set_visible_child_name("welcome");
+            }
+        });
+
+        let stack_help = stack.clone();
+        help_btn.connect_clicked(move |_| {
+            stack_help.set_visible_child_name("help");
+        });
 
         let win_ref = window.clone();
         hc_btn.connect_toggled(move |btn| {
@@ -358,6 +577,7 @@ impl GameWindow {
             db,
             mode,
             toast_overlay,
+            _size_provider: size_provider,
         };
 
         if restored {
@@ -374,7 +594,7 @@ impl GameWindow {
             &about_btn,
             &stats_btn,
         );
-        gw.setup_keyboard_input();
+        gw.setup_keyboard_input(page_active, back_button.clone());
         gw
     }
 
@@ -467,7 +687,7 @@ impl GameWindow {
             let about = adw::AboutDialog::builder()
                 .application_name("پردل")
                 .application_icon("com.parchlinux.pordle")
-                .version("0.1.1")
+                .version("0.2.0")
                 .comments("یک بازی وردل فارسی برای پارچ لینوکس")
                 .website("https://parchlinux.com")
                 .issue_url("https://github.com/parchlinux/pordle")
@@ -491,7 +711,7 @@ impl GameWindow {
         });
     }
 
-    fn setup_keyboard_input(&self) {
+    fn setup_keyboard_input(&self, active: Rc<Cell<bool>>, back_button: gtk::Button) {
         let game = self.game.clone();
         let board = self.board.clone();
         let keyboard = self.keyboard.clone();
@@ -501,6 +721,9 @@ impl GameWindow {
         let today = today_key();
 
         self.keyboard.set_callback(move |event| {
+            if !active.get() {
+                return;
+            }
             match event {
                 KeyEvent::Letter(c) => {
                     let mut g = game.borrow_mut();
@@ -589,8 +812,14 @@ impl GameWindow {
         let ctrl = gtk::EventControllerKey::new();
         ctrl.set_propagation_phase(gtk::PropagationPhase::Capture);
         let keyboard_sender = self.keyboard.clone();
+        let back_btn = back_button.clone();
 
         ctrl.connect_key_pressed(move |_ctrl, keyval, _keycode, _state| {
+            if keyval == gdk::Key::Escape && back_btn.is_visible() {
+                back_btn.activate();
+                return glib::Propagation::Stop;
+            }
+
             if keyval == gdk::Key::Return || keyval == gdk::Key::KP_Enter {
                 keyboard_sender.send_event(KeyEvent::Enter);
                 return glib::Propagation::Stop;

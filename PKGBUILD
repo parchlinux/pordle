@@ -1,6 +1,6 @@
 # Maintainer: Parch Linux Team
 pkgname=pordle
-pkgver=0.1.1
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="A Persian Wordle game for Parch Linux"
 arch=('x86_64')
